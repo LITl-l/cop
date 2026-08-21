@@ -1,0 +1,1102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://claimgate.dev/schemas/cop-0.1.schema.json",
+  "title": "Code Oracle Protocol 0.1",
+  "description": "Wire schema for COP requests and answers. See SPEC.md.",
+  "$defs": {
+    "Position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "line",
+        "character"
+      ],
+      "properties": {
+        "line": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Zero-based."
+        },
+        "character": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Zero-based, UTF-16 code units."
+        }
+      }
+    },
+    "Range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start",
+        "end"
+      ],
+      "properties": {
+        "start": {
+          "$ref": "#/$defs/Position"
+        },
+        "end": {
+          "$ref": "#/$defs/Position",
+          "description": "Exclusive."
+        }
+      }
+    },
+    "Location": {
+      "type": "object",
+      "required": [
+        "path",
+        "range"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^[^/].*$",
+          "description": "Workspace-relative, '/' separated, no leading './'."
+        },
+        "range": {
+          "$ref": "#/$defs/Range"
+        },
+        "is_definition": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "SymbolId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "SCIP symbol string grammar, or 'local <id>'.",
+      "pattern": "^(local [^ ]+|[^ ]+ [^ ]+ [^ ]+ [^ ]+ .+)$"
+    },
+    "SymbolKind": {
+      "type": "string",
+      "description": "Open enum; consumers must accept unrecognized values as 'unknown'.",
+      "examples": [
+        "namespace",
+        "package",
+        "module",
+        "class",
+        "interface",
+        "trait",
+        "struct",
+        "enum",
+        "enum_member",
+        "type_alias",
+        "function",
+        "method",
+        "constructor",
+        "property",
+        "field",
+        "variable",
+        "constant",
+        "macro",
+        "type_parameter",
+        "parameter",
+        "unknown"
+      ]
+    },
+    "SymbolRef": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind_hint": {
+          "$ref": "#/$defs/SymbolKind"
+        },
+        "lang": {
+          "type": "string"
+        },
+        "context": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "range": {
+              "$ref": "#/$defs/Range"
+            },
+            "imports": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "near_paths": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "Confidence": {
+      "enum": [
+        "exact",
+        "structural",
+        "textual"
+      ],
+      "description": "The mechanism that produced the answer, not a probability."
+    },
+    "Status": {
+      "enum": [
+        "ok",
+        "not_found",
+        "ambiguous",
+        "unsupported",
+        "error"
+      ]
+    },
+    "Engine": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "Searched": {
+      "type": "object",
+      "properties": {
+        "scope": {
+          "type": "string",
+          "examples": [
+            "index",
+            "files",
+            "package",
+            "workspace"
+          ]
+        },
+        "roots": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "file_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "index_commit": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "Candidate": {
+      "type": "object",
+      "required": [
+        "symbol"
+      ],
+      "properties": {
+        "symbol": {
+          "$ref": "#/$defs/SymbolId"
+        },
+        "kind": {
+          "$ref": "#/$defs/SymbolKind"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Location"
+          }
+        }
+      }
+    },
+    "Request": {
+      "type": "object",
+      "required": [
+        "cop",
+        "id",
+        "verb",
+        "params"
+      ],
+      "properties": {
+        "cop": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+$"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verb": {
+          "type": "string",
+          "minLength": 1
+        },
+        "params": {
+          "type": "object"
+        },
+        "deadline_ms": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/$defs/VerbParamDispatch"
+        }
+      ]
+    },
+    "VerbParamDispatch": {
+      "description": "Per-verb params validation for known verbs. Unknown verbs are unconstrained.",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "const": "capabilities"
+              }
+            },
+            "required": [
+              "verb"
+            ]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "type": "object",
+                "maxProperties": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "const": "resolve"
+              }
+            },
+            "required": [
+              "verb"
+            ]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "type": "object",
+                "required": [
+                  "ref"
+                ],
+                "properties": {
+                  "ref": {
+                    "$ref": "#/$defs/SymbolRef"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "const": "exists"
+              }
+            },
+            "required": [
+              "verb"
+            ]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "type": "object",
+                "oneOf": [
+                  {
+                    "required": [
+                      "ref"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "symbol"
+                    ]
+                  }
+                ],
+                "properties": {
+                  "ref": {
+                    "$ref": "#/$defs/SymbolRef"
+                  },
+                  "symbol": {
+                    "$ref": "#/$defs/SymbolId"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "const": "location"
+              }
+            },
+            "required": [
+              "verb"
+            ]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "type": "object",
+                "required": [
+                  "symbol"
+                ],
+                "properties": {
+                  "symbol": {
+                    "$ref": "#/$defs/SymbolId"
+                  },
+                  "definitions_only": {
+                    "type": "boolean",
+                    "default": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "enum": [
+                  "signature",
+                  "value",
+                  "docstring",
+                  "visibility"
+                ]
+              }
+            },
+            "required": [
+              "verb"
+            ]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "type": "object",
+                "required": [
+                  "symbol"
+                ],
+                "properties": {
+                  "symbol": {
+                    "$ref": "#/$defs/SymbolId"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "const": "members"
+              }
+            },
+            "required": [
+              "verb"
+            ]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "type": "object",
+                "required": [
+                  "symbol"
+                ],
+                "properties": {
+                  "symbol": {
+                    "$ref": "#/$defs/SymbolId"
+                  },
+                  "kinds": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/SymbolKind"
+                    }
+                  },
+                  "include_inherited": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "include_private": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "const": "parse_snippet"
+              }
+            },
+            "required": [
+              "verb"
+            ]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "type": "object",
+                "required": [
+                  "code"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "lang": {
+                    "type": "string"
+                  },
+                  "dialect": {
+                    "type": "string"
+                  },
+                  "mode": {
+                    "enum": [
+                      "module",
+                      "expression",
+                      "statements",
+                      "fragment"
+                    ],
+                    "default": "module"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verb": {
+                "const": "references"
+              }
+            },
+            "required": [
+              "verb"
+            ]
+          },
+          "then": {
+            "properties": {
+              "params": {
+                "type": "object",
+                "required": [
+                  "symbol"
+                ],
+                "properties": {
+                  "symbol": {
+                    "$ref": "#/$defs/SymbolId"
+                  },
+                  "scope": {
+                    "enum": [
+                      "file",
+                      "package",
+                      "workspace"
+                    ],
+                    "default": "workspace"
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "UsedInput": {
+      "type": "object",
+      "description": "SPEC 5.6: one thing the plugin read while producing the answer. Open by design — a later version may add input kinds, and 'digest' is optional because the host owns the cache.",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "description": "file, tool, index, env, or anything a later version adds."
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^[^/].*$",
+          "description": "Workspace-relative, for kind 'file'."
+        },
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "digest": {
+          "type": "string",
+          "description": "OPTIONAL. Content hash, e.g. 'blake3:9f2c1ab'."
+        },
+        "scope": {
+          "type": "string",
+          "description": "For kind 'index': what the index covered."
+        }
+      }
+    },
+    "Answer": {
+      "type": "object",
+      "required": [
+        "cop",
+        "id",
+        "status",
+        "engine"
+      ],
+      "properties": {
+        "cop": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+$"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "$ref": "#/$defs/Status"
+        },
+        "confidence": {
+          "$ref": "#/$defs/Confidence"
+        },
+        "result": {
+          "type": "object"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Location"
+          }
+        },
+        "searched": {
+          "$ref": "#/$defs/Searched"
+        },
+        "candidates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Candidate"
+          }
+        },
+        "used_inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UsedInput"
+          },
+          "description": "SPEC 5.6. SHOULD be present on answers derived from repository content."
+        },
+        "engine": {
+          "$ref": "#/$defs/Engine"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "extra": {
+          "type": "object"
+        }
+      },
+      "allOf": [
+        {
+          "description": "SPEC 5.2: result present iff status is ok.",
+          "if": {
+            "properties": {
+              "status": {
+                "const": "ok"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "required": [
+              "result",
+              "confidence"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "result"
+              ]
+            }
+          }
+        },
+        {
+          "description": "SPEC 5.2: confidence required unless unsupported/error.",
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "unsupported",
+                  "error"
+                ]
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "required": [
+              "reason"
+            ],
+            "not": {
+              "required": [
+                "confidence"
+              ]
+            }
+          }
+        },
+        {
+          "description": "SPEC 7.2: ambiguous carries candidates.",
+          "if": {
+            "properties": {
+              "status": {
+                "const": "ambiguous"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "required": [
+              "candidates",
+              "confidence"
+            ]
+          }
+        }
+      ]
+    },
+    "CapabilitiesResult": {
+      "type": "object",
+      "required": [
+        "cop_versions",
+        "engine",
+        "languages",
+        "verbs"
+      ],
+      "properties": {
+        "cop_versions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+$"
+          }
+        },
+        "engine": {
+          "$ref": "#/$defs/Engine"
+        },
+        "languages": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "file_patterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "verbs": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "confidence",
+              "requires_build"
+            ],
+            "properties": {
+              "confidence": {
+                "$ref": "#/$defs/Confidence"
+              },
+              "requires_build": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "cache_keys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "suggested_timeout_ms": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "max_batch": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      }
+    },
+    "ResolveResult": {
+      "type": "object",
+      "required": [
+        "symbol"
+      ],
+      "properties": {
+        "symbol": {
+          "$ref": "#/$defs/SymbolId"
+        },
+        "kind": {
+          "$ref": "#/$defs/SymbolKind"
+        }
+      }
+    },
+    "ExistsResult": {
+      "type": "object",
+      "required": [
+        "exists"
+      ],
+      "properties": {
+        "exists": {
+          "type": "boolean"
+        },
+        "kind": {
+          "$ref": "#/$defs/SymbolKind"
+        }
+      }
+    },
+    "LocationResult": {
+      "type": "object",
+      "required": [
+        "locations"
+      ],
+      "properties": {
+        "locations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Location"
+          }
+        }
+      }
+    },
+    "SignatureResult": {
+      "type": "object",
+      "required": [
+        "render",
+        "params"
+      ],
+      "properties": {
+        "render": {
+          "type": "string"
+        },
+        "params": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "kind": {
+                "enum": [
+                  "positional",
+                  "keyword",
+                  "both",
+                  "receiver"
+                ]
+              },
+              "type": {
+                "type": "string",
+                "description": "Language's own notation. Not normalized."
+              },
+              "default": {
+                "type": "string"
+              },
+              "optional": {
+                "type": "boolean",
+                "default": false
+              },
+              "variadic": {
+                "type": "boolean",
+                "default": false
+              }
+            }
+          }
+        },
+        "returns": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string"
+            }
+          }
+        },
+        "raises": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "conditional": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "type_params": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "bound": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "modifiers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ValueResult": {
+      "type": "object",
+      "required": [
+        "repr",
+        "evaluation"
+      ],
+      "properties": {
+        "repr": {
+          "type": "string"
+        },
+        "json": true,
+        "type": {
+          "type": "string"
+        },
+        "evaluation": {
+          "enum": [
+            "literal",
+            "const_folded",
+            "computed",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "MembersResult": {
+      "type": "object",
+      "required": [
+        "members",
+        "complete"
+      ],
+      "properties": {
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "symbol",
+              "name"
+            ],
+            "properties": {
+              "symbol": {
+                "$ref": "#/$defs/SymbolId"
+              },
+              "name": {
+                "type": "string"
+              },
+              "kind": {
+                "$ref": "#/$defs/SymbolKind"
+              }
+            }
+          }
+        },
+        "complete": {
+          "type": "boolean"
+        }
+      }
+    },
+    "DocstringResult": {
+      "type": "object",
+      "required": [
+        "text"
+      ],
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "format": {
+          "enum": [
+            "plaintext",
+            "markdown",
+            "rst",
+            "javadoc",
+            "xmldoc",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "VisibilityResult": {
+      "type": "object",
+      "required": [
+        "visibility"
+      ],
+      "properties": {
+        "visibility": {
+          "enum": [
+            "public",
+            "protected",
+            "internal",
+            "private",
+            "unknown"
+          ]
+        },
+        "deprecated": {
+          "type": "object",
+          "properties": {
+            "since": {
+              "type": "string"
+            },
+            "replacement": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "ParseSnippetResult": {
+      "type": "object",
+      "required": [
+        "ok"
+      ],
+      "properties": {
+        "ok": {
+          "type": "boolean"
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "message"
+            ],
+            "properties": {
+              "message": {
+                "type": "string"
+              },
+              "range": {
+                "$ref": "#/$defs/Range"
+              },
+              "severity": {
+                "enum": [
+                  "error",
+                  "warning"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "ReferencesResult": {
+      "type": "object",
+      "required": [
+        "locations"
+      ],
+      "properties": {
+        "locations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Location"
+          }
+        },
+        "truncated": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  },
+  "type": "object",
+  "allOf": [
+    {
+      "$comment": "A message is a request or an answer, discriminated by `verb` vs `status`.",
+      "if": {
+        "type": "object",
+        "required": [
+          "verb"
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/Request"
+      },
+      "else": {
+        "if": {
+          "type": "object",
+          "required": [
+            "status"
+          ]
+        },
+        "then": {
+          "$ref": "#/$defs/Answer"
+        },
+        "else": {
+          "not": {},
+          "$comment": "A COP message must carry either `verb` (request) or `status` (answer)."
+        }
+      }
+    }
+  ]
+}

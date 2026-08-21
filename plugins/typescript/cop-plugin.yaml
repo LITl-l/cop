@@ -1,0 +1,18 @@
+cop_plugin: "0.2"
+id: cop-typescript
+description: TypeScript type-checker oracle
+
+languages: ["*"]
+
+# SPEC 12 COP-CAP-DECLARE — every capability defaults to empty.
+# What is not declared here is not granted, and a change to this block shows up
+# as a reviewable diff in the host's lock file (COP-CAP-PIN).
+capabilities:
+  read:    ["$WORKSPACE/**"]
+  write:   ["$PLUGIN_TMP/**"]
+  network: []
+  exec:    []
+  env:     ["PATH", "HOME"]
+
+requires_build: false
+network: false

@@ -1,0 +1,9 @@
+{
+  "name": "cop-typescript",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Code Oracle Protocol plugin for TypeScript/JavaScript, backed by the TS type checker",
+  "bin": { "cop-typescript": "./cop-typescript.ts" },
+  "dependencies": { "typescript": "^5.9.0" }
+}

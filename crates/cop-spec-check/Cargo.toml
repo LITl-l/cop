@@ -1,0 +1,14 @@
+[package]
+name = "cop-spec-check"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Validate every JSON example in SPEC.md against the wire schema"
+
+[[bin]]
+name = "cop-spec-check"
+path = "src/main.rs"
+
+[dependencies]
+serde_json.workspace = true
+jsonschema = { version = "0.36", default-features = false }

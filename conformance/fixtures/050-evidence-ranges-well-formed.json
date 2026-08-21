@@ -1,0 +1,51 @@
+{
+  "name": "evidence-ranges-well-formed",
+  "spec": "6.3",
+  "request": { "verb": "resolve", "params": { "ref": { "name": "Greeter", "kind_hint": "class" } } },
+  "expect": {
+    "status": ["ok", "ambiguous"],
+    "schema": {
+      "comment": "Every location anywhere in the answer must have a relative path and a zero-based range. The old predicate DSL could not express 'for all elements'.",
+      "type": "object",
+      "$defs": {
+        "loc": {
+          "type": "object",
+          "required": ["path", "range"],
+          "properties": {
+            "path": { "type": "string", "pattern": "^[^/]" },
+            "range": {
+              "type": "object",
+              "required": ["start", "end"],
+              "properties": {
+                "start": { "$ref": "#/$defs/pos" },
+                "end": { "$ref": "#/$defs/pos" }
+              }
+            }
+          }
+        },
+        "pos": {
+          "type": "object",
+          "required": ["line", "character"],
+          "properties": {
+            "line": { "type": "integer", "minimum": 0 },
+            "character": { "type": "integer", "minimum": 0 }
+          }
+        }
+      },
+      "properties": {
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/loc" } },
+        "candidates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["symbol"],
+            "properties": {
+              "symbol": { "pattern": "^[^ ]+ [^ ]+ [^ ]+ [^ ]+ .+$" },
+              "evidence": { "type": "array", "items": { "$ref": "#/$defs/loc" } }
+            }
+          }
+        }
+      }
+    }
+  }
+}

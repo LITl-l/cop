@@ -1,0 +1,29 @@
+{
+  "name": "exists-present-symbol",
+  "spec": "7.3",
+  "request": { "verb": "exists", "params": { "ref": { "name": "greet" } } },
+  "expect": {
+    "status": ["ok"],
+    "schema": {
+      "type": "object",
+      "required": ["result", "evidence", "confidence"],
+      "properties": {
+        "result": {
+          "type": "object",
+          "required": ["exists"],
+          "properties": { "exists": { "const": true } }
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["path", "range"],
+            "properties": { "path": { "pattern": "greeting\\.(py|ts|go)$" } }
+          }
+        },
+        "confidence": { "enum": ["exact", "structural", "textual"] }
+      }
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "name": "several-matches-is-ambiguous",
+  "spec": "7.2",
+  "request": {
+    "verb": "resolve",
+    "params": {
+      "ref": {
+        "name": "greet"
+      }
+    }
+  },
+  "expect": {
+    "status": [
+      "ambiguous"
+    ],
+    "schema": {
+      "comment": "`greet` is declared in more than one file in the fixture workspace. A plugin that picks one and calls it a resolution is guessing; SPEC 7.2 requires `ambiguous` with the candidates listed.",
+      "type": "object",
+      "required": [
+        "candidates"
+      ],
+      "properties": {
+        "candidates": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": [
+              "symbol"
+            ]
+          }
+        }
+      },
+      "not": {
+        "required": [
+          "result"
+        ]
+      }
+    }
+  }
+}

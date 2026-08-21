@@ -1,0 +1,14 @@
+{
+  "name": "capabilities-shape",
+  "spec": "7.1",
+  "request": { "verb": "capabilities", "params": {} },
+  "expect": {
+    "status": ["ok"],
+    "require": [
+      { "path": "result.cop_versions.0", "equals": "0.1" },
+      { "path": "result.verbs", "non_empty": true },
+      { "path": "result.engine.name", "non_empty": true },
+      { "path": "result.languages", "non_empty": true }
+    ]
+  }
+}

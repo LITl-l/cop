@@ -1,0 +1,13 @@
+[package]
+name = "cop-mischief"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Wrap a COP plugin and exercise every freedom the specification allows"
+
+[[bin]]
+name = "cop-mischief"
+path = "src/main.rs"
+
+[dependencies]
+serde_json = { workspace = true, features = ["preserve_order"] }

@@ -1,0 +1,21 @@
+{
+  "name": "resolve-reports-a-real-kind",
+  "spec": "6.6, 7.2",
+  "request": { "verb": "resolve", "params": { "ref": { "name": "Greeter", "kind_hint": "class" } } },
+  "expect": {
+    "status": ["ok", "ambiguous"],
+    "schema": {
+      "comment": "The kind must be a value from SPEC 6.6, not an arbitrary string.",
+      "type": "object",
+      "anyOf": [
+        { "properties": { "result": { "type": "object", "required": ["kind"],
+            "properties": { "kind": { "enum": ["class","interface","struct","enum","trait","type_alias"] } } } },
+          "required": ["result"] },
+        { "properties": { "candidates": { "type": "array", "minItems": 1, "items": {
+            "type": "object", "required": ["kind"],
+            "properties": { "kind": { "enum": ["class","interface","struct","enum","trait","type_alias"] } } } } },
+          "required": ["candidates"] }
+      ]
+    }
+  }
+}

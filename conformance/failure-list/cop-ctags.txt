@@ -1,0 +1,9 @@
+# Conformance cases cop-ctags is known to fail (SPEC 13.1).
+#
+# One check name per line; '#' starts a comment. The gate runs both ways: a
+# check listed here that starts passing fails the build as stale, so this file
+# cannot quietly outlive the gap it records.
+#
+# Empty on purpose. cop-ctags passes every check in the suite, and this file
+# exists so that a regression has somewhere to be argued about rather than
+# somewhere to hide.

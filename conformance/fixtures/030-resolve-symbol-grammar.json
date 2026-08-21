@@ -1,0 +1,9 @@
+{
+  "name": "resolve-emits-scip-grammar",
+  "spec": "6.2",
+  "request": { "verb": "resolve", "params": { "ref": { "name": "Greeter", "kind_hint": "class" } } },
+  "expect": {
+    "status": ["ok", "ambiguous"],
+    "require": [ { "path": "confidence", "matches": "^(exact|structural|textual)$" } ]
+  }
+}

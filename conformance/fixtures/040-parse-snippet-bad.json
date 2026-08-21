@@ -1,0 +1,9 @@
+{
+  "name": "parse-snippet-rejects-broken-code",
+  "spec": "7.10",
+  "request": { "verb": "parse_snippet", "params": { "code": "def f(:\n", "lang": "python" } },
+  "expect": {
+    "status": ["ok"],
+    "require": [ { "path": "result.ok", "equals": false } ]
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "unique-symbol-is-not-ambiguous",
+  "spec": "7.2",
+  "request": {
+    "verb": "resolve",
+    "params": {
+      "ref": {
+        "name": "Config",
+        "kind_hint": "struct"
+      }
+    }
+  },
+  "expect": {
+    "status": [
+      "ok",
+      "not_found"
+    ],
+    "schema": {
+      "comment": "One match is a resolution, not an ambiguity. `Config` occurs exactly once in the fixture workspace, so a plugin reporting `ambiguous` has an off-by-one in its threshold. (The first draft of this fixture used a symbol that genuinely appears twice, and the suite correctly rejected it \u2014 the fixture was wrong, not the plugin.)",
+      "type": "object",
+      "not": {
+        "required": [
+          "candidates"
+        ]
+      }
+    }
+  }
+}

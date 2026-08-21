@@ -1,0 +1,28 @@
+name: COP
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: oven-sh/setup-bun@v2
+      - run: sudo apt-get update && sudo apt-get install -y universal-ctags
+      - run: bun install --cwd plugins/typescript --frozen-lockfile
+      - run: make check
+
+  mutants:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: sudo apt-get update && sudo apt-get install -y universal-ctags
+      - run: cargo install cargo-mutants --locked
+      # A surviving mutant is a hole in the conformance suite. Reported, not
+      # gating: three known survivors are classified in the README.
+      - run: make mutants || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: mutants-report, path: mutants.out/ }

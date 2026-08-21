@@ -1,0 +1,17 @@
+{
+  "name": "exists-absent-is-not_found",
+  "spec": "3.4, 6.5",
+  "request": { "verb": "exists", "params": { "ref": { "name": "ZzTotallyAbsentZz" } } },
+  "expect": {
+    "status": ["not_found"],
+    "schema": {
+      "comment": "SPEC 3.4: a negative answer must say what was searched, and must not carry a result.",
+      "type": "object",
+      "required": ["searched"],
+      "not": { "required": ["result"] },
+      "properties": {
+        "searched": { "type": "object", "minProperties": 1 }
+      }
+    }
+  }
+}

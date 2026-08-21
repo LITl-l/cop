@@ -1,0 +1,13 @@
+[workspace]
+resolver = "3"
+members = ["crates/cop-core", "crates/cop-conformance", "crates/cop-ctags", "crates/cop-spec-check", "crates/cop-mischief"]
+
+[workspace.package]
+version = "0.3.0"
+edition = "2024"
+license = "MIT"
+
+[workspace.dependencies]
+cop-core = { path = "crates/cop-core", version = "0.3.0" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

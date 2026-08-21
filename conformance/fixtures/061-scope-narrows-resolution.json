@@ -1,0 +1,27 @@
+{
+  "name": "scope-and-kind-narrow-exactly",
+  "spec": "6.1, 7.2",
+  "request": {
+    "verb": "resolve",
+    "params": { "ref": { "name": "Greeter.greet", "kind_hint": "method" } }
+  },
+  "expect": {
+    "status": ["ok"],
+    "schema": {
+      "comment": "Scope and kind are refinements, and a refinement that inverts still returns *something*. Asserting the exact symbol is what makes this fixture able to tell the difference: the free function `greet` and the method `Greeter.greet` both exist in the fixture workspace, and only a correct narrowing picks the method. Mutation testing found four inverted-filter mutants surviving the looser version of this fixture.",
+      "type": "object",
+      "required": ["result"],
+      "properties": {
+        "result": {
+          "type": "object",
+          "required": ["symbol", "kind"],
+          "properties": {
+            "symbol": { "pattern": "Greeter#greet\\(\\)\\.$" },
+            "kind": { "const": "method" }
+          }
+        }
+      },
+      "not": { "required": ["candidates"] }
+    }
+  }
+}

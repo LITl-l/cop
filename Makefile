@@ -1,4 +1,4 @@
-.PHONY: check build test spec-examples spec-coverage conformance hostile clean
+.PHONY: check build test spec-examples spec-coverage conformance hostile mischief audit mutants semver clean
 BIN := target/release
 
 check: build test spec-examples spec-coverage conformance hostile mischief audit
@@ -72,6 +72,19 @@ mischief: build
 	  fi; \
 	done; \
 	if [ $$fail -eq 0 ]; then echo "  verdicts identical across all seeds"; else exit 1; fi
+
+# The published API of cop-core is what third-party plugins compile against, so
+# a breaking change must be a deliberate version decision rather than a diff
+# nobody noticed. BASELINE is a git ref, which works before the crate is
+# published; after publication, drop --baseline-rev and it compares to crates.io.
+# Not part of `make check`: it clones and builds the baseline.
+BASELINE ?= v0.3.0-rc1
+semver:
+	@if ! command -v cargo-semver-checks >/dev/null 2>&1; then \
+	  echo "  cargo-semver-checks not installed: cargo install cargo-semver-checks --locked"; exit 1; fi
+	@if ! git rev-parse --verify -q $(BASELINE) >/dev/null; then \
+	  echo "  no baseline ref $(BASELINE); set BASELINE=<ref>"; exit 1; fi
+	cargo semver-checks --baseline-rev $(BASELINE) -p cop-core
 
 # Mutation testing: break the reference plugin on purpose and ask whether the
 # conformance suite notices. A surviving mutant is a hole in the suite.

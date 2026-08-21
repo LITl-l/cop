@@ -18,7 +18,10 @@ centrally without touching a single plugin.
 ## Quick start
 
 ```bash
-make check        # build + unit tests + spec examples + both plugins against the suite
+make check        # build, unit tests, spec examples, rule coverage, both plugins
+                  # against the suite, host robustness, metamorphic, dependency audit
+make mutants      # break the plugin on purpose; a survivor is a hole in the suite
+make semver       # cop-core's public API against the last release
 ```
 
 Talking to a plugin by hand:

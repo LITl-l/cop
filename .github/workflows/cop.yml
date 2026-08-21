@@ -1,5 +1,6 @@
 name: COP
 on: [push, pull_request]
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -12,6 +13,10 @@ jobs:
       - run: bun install --cwd plugins/typescript --frozen-lockfile
       - run: make check
 
+  # A surviving mutant is a hole in the conformance suite, not a broken build,
+  # so this gates on the score rather than on the tool's exit status. The score
+  # is currently 100%; a drop is a suite regression and should be argued about
+  # in review, which is what failing here forces.
   mutants:
     runs-on: ubuntu-latest
     steps:
@@ -20,9 +25,20 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: sudo apt-get update && sudo apt-get install -y universal-ctags
       - run: cargo install cargo-mutants --locked
-      # A surviving mutant is a hole in the conformance suite. Reported, not
-      # gating: three known survivors are classified in the README.
-      - run: make mutants || true
+      - run: make mutants
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: mutants-report, path: mutants.out/ }
+
+  # cop-core is what third-party plugins compile against. A breaking change is
+  # allowed; a breaking change nobody noticed is not.
+  semver:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo install cargo-semver-checks --locked
+      - run: make semver BASELINE=origin/${{ github.base_ref }}

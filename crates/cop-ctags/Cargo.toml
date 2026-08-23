@@ -3,6 +3,10 @@ name = "cop-ctags"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
 description = "Universal fallback COP plugin backed by Universal Ctags"
 
 [[bin]]

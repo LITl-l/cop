@@ -3,6 +3,10 @@ name = "cop-mischief"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
 description = "Wrap a COP plugin and exercise every freedom the specification allows"
 
 [[bin]]

@@ -3,6 +3,10 @@ name = "cop-spec-check"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
 description = "Validate every JSON example in SPEC.md against the wire schema"
 
 [[bin]]

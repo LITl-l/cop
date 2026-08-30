@@ -6,6 +6,10 @@ members = ["crates/cop-core", "crates/cop-conformance", "crates/cop-ctags", "cra
 version = "0.3.0"
 edition = "2024"
 license = "MIT"
+repository = "https://github.com/LITl-l/cop"
+readme = "README.md"
+keywords = ["protocol", "static-analysis", "conformance", "documentation"]
+categories = ["development-tools", "development-tools::testing"]
 
 [workspace.dependencies]
 cop-core = { path = "crates/cop-core", version = "0.3.0" }

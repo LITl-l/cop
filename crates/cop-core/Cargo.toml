@@ -3,6 +3,10 @@ name = "cop-core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
 description = "Code Oracle Protocol 0.1 envelope types"
 
 [dependencies]

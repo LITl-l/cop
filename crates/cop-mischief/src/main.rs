@@ -38,7 +38,7 @@ impl Rng {
         if n == 0 { 0 } else { (self.next() % n as u64) as usize }
     }
     fn chance(&mut self, one_in: u64) -> bool {
-        self.next() % one_in == 0
+        self.next().is_multiple_of(one_in)
     }
     fn shuffle<T>(&mut self, v: &mut [T]) {
         for i in (1..v.len()).rev() {

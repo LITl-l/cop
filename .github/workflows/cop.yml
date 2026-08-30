@@ -1,6 +1,18 @@
 name: COP
 on: [push, pull_request]
 
+# The workflow only reads the repository. A token that cannot write is one that
+# cannot be turned against the repo by a compromised build-time dependency.
+permissions:
+  contents: read
+
+# A force-push mid-run leaves the earlier run burning minutes on a commit nobody
+# will look at again. Superseded runs on the same ref are cancelled; runs on
+# other refs are untouched.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     runs-on: ubuntu-latest

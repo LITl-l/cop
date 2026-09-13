@@ -83,6 +83,54 @@ The one idea worth taking from CUE is that assertions should be constraints rath
 predicate language. Conformance fixtures now assert with JSON Schema subschemas, which gets that
 benefit with no new dependency.
 
+## Why not RDF, SPARQL, OWL, or SHACL
+
+Wrong layer. COP is about getting a fact out of a process that does not have one yet; the semantic
+web stack is about querying, inferring over, and validating a graph that already exists. The hard
+part here is persuading a plugin author to answer at all — across 135 languages, without a build —
+and to say so when they cannot. A query language does not supply that.
+
+**The ontology is the Kythe failure mode again.** RDF/OWL wants a cross-language schema for symbols,
+types, and members agreed up front. Kythe did that and has three indexers after a decade (§3.2).
+CodeOntology did the RDF-native version — an ontology for object-oriented source, 2M triples over
+OpenJDK 8, ISWC 2017 — and its parser's last commit is October 2021, at 32 stars. COP instead
+carries types and signatures as strings in the language's own notation, with language-specific
+richness in `extra` that the host may ignore.
+
+**Open-world semantics collapse the distinction the protocol exists to make.** `not_found` and
+`unsupported` are different answers (§3.4); under OWL they are both *not entailed* by default.
+Negative facts can be asserted, but that is modelling *how far did you look* by hand, with the
+reasoner contributing nothing, after paying for the ontology. OWL also has no unique name
+assumption, where COP mandates SCIP symbol strings and forbids plugins inventing their own (§6.2).
+For a protocol whose whole job is deciding whether this is the symbol the prose meant, that is
+backwards.
+
+**Entailment is not evidence.** Answers carry a path and range, or a description of what was
+searched (§3.5), because a reviewer has to be pointed at a line. A justification over an ontology is
+a different artifact, and not one that goes in a diff.
+
+**Per-answer metadata is the awkward case for triples.** `confidence`, `evidence`, `engine`, and
+`used_inputs` ride on every answer; in RDF that is per-triple annotation — reification, or RDF-star.
+SPARQL 1.1 and SHACL 1.0 are Recommendations, but RDF 1.2 and the SHACL 1.2 family, the parts that
+would actually carry this, are Working Drafts as of September 2026. A spec promising additive-only
+changes (§14.2) should not rest on a moving draft.
+
+**SHACL is the closest fit and the wrong distribution.** Its idea — assert with constraints rather
+than a bespoke predicate language — is one this repository already took, via JSON Schema subschemas
+in the conformance fixtures. But SHACL validates the shape of an RDF graph, not the correspondence
+between a sentence of prose and a fact in code, which is where the host's judgment lives. Making it
+normative would also ship an RDF stack to every plugin author: the objection that ended CUE above.
+
+**SPARQL's recursion is too weak for the queries that would justify a graph.** Transitive members,
+call graphs, and points-to want fixpoint rules; SPARQL has property paths. CodeQL, Doop, and Glean
+all landed on Datalog.
+
+**Where a store would genuinely fit is above the host, not below it.** Once answers accumulate
+across repositories and stop being live oracle calls, putting them in a store with a query language
+is reasonable — the Glean pattern §3.2 already adopts, rich facts first and cross-language views
+derived on top. The trigger is the host caching answers in order to query them rather than to
+memoize them, and at that point the evidence points at Datalog before SPARQL.
+
 ## Status
 
 **Wire protocol `0.1`. Repository 0.3.0. Draft, unstable.** Before 1.0.0 any release may break.
